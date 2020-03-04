@@ -1,0 +1,7 @@
+resources:
+  - url: http://127.0.0.1:5000/frame-card.js
+    type: module
+views:
+  - cards:
+      - type: custom:frame-card
+        title: Test Frame
