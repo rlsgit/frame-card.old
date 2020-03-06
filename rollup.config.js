@@ -26,7 +26,7 @@ const plugins = [
   babel({
     exclude: 'node_modules/**',
   }),
-  dev && serve(serveopts),
+  // dev && serve(serveopts),
   !dev && terser(),
 ];
 

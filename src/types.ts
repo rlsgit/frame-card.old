@@ -1,13 +1,10 @@
-import { ActionConfig } from 'custom-card-helpers';
-
 // TODO Add your configuration elements here for type-checking
 export interface FrameCardConfig {
   type: string;
   name?: string;
+  style?: object;
   title?: string;
+  title_align?: string;
+  title_style?: object;
   card?: string;
-  entity?: string;
-  tap_action?: ActionConfig;
-  hold_action?: ActionConfig;
-  double_tap_action?: ActionConfig;
 }

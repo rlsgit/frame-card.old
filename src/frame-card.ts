@@ -1,28 +1,15 @@
 import { LitElement, html, customElement, property, CSSResult, TemplateResult, css, PropertyValues } from 'lit-element';
-import {
-  HomeAssistant,
-  hasConfigOrEntityChanged,
-  hasAction,
-  ActionHandlerEvent,
-  handleAction,
-  LovelaceCardEditor,
-  getLovelace,
-} from 'custom-card-helpers';
-
-import './editor';
+import { HomeAssistant, LovelaceCardEditor, createThing } from 'custom-card-helpers';
+import { hass } from 'card-tools/src/hass';
+import { string as toStyle } from 'to-style';
 
 import { FrameCardConfig } from './types';
-import { actionHandler } from './action-handler-directive';
 import { CARD_VERSION } from './const';
 
 import { localize } from './localize/localize';
 
 /* eslint no-console: 0 */
-console.info(
-  `%c  FRAME-CARD \n%c  ${localize('common.version')} ${CARD_VERSION}    `,
-  'color: orange; font-weight: bold; background: black',
-  'color: white; font-weight: bold; background: dimgray',
-);
+console.info(`FRAME-CARD ${localize('common.version')} ${CARD_VERSION} loaded...`);
 
 @customElement('frame-card')
 export class FrameCard extends LitElement {
@@ -37,6 +24,7 @@ export class FrameCard extends LitElement {
   // TODO Add any properities that should cause your element to re-render here
   @property() public hass?: HomeAssistant;
   @property() private _config?: FrameCardConfig;
+  @property() private card?;
 
   public setConfig(config: FrameCardConfig): void {
     // TODO Check for required fields and that they are of the proper format
@@ -49,8 +37,30 @@ export class FrameCard extends LitElement {
     };
   }
 
+  /***
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     return hasConfigOrEntityChanged(this, changedProps, false);
+  }
+  ***/
+
+  updated(changedProps) {
+    if (!this.card) {
+      this.card = this.build_card();
+    }
+
+    if (this.card && changedProps && changedProps.has('hass')) {
+      this.card.hass = this.hass;
+    }
+  }
+
+  build_card() {
+    if (this._config && this._config.card) {
+      const el = createThing(this._config.card);
+      el.hass = this.hass;
+      return el;
+    }
+
+    return null;
   }
 
   protected render(): TemplateResult | void {
@@ -59,27 +69,22 @@ export class FrameCard extends LitElement {
     }
 
     return html`
-      <ha-card
-        .header=${this._config.name}
-        @action=${this._handleAction}
-        .actionHandler=${actionHandler({
-          hasHold: hasAction(this._config.hold_action),
-          hasDoubleTap: hasAction(this._config.double_tap_action),
-          repeat: this._config.hold_action ? this._config.hold_action.repeat : undefined,
-        })}
-        tabindex="0"
-        aria-label=${`FrameCard: ${this._config.entity}`}
-      ></ha-card>
+      <div class="framecard" .header=${this._config.name}>
+        <fieldset style=${toStyle(this._config.style)}>
+          <legend style="${toStyle(this._config.title_style)}" align="${this._config.title_align || ''}">
+            ${this._config.title}
+          </legend>
+          ${this.card}
+        </fieldset>
+      </div>
     `;
   }
 
-  private _handleAction(ev: ActionHandlerEvent): void {
-    if (this.hass && this._config && ev.detail.action) {
-      handleAction(this, this.hass, this._config, ev.detail.action);
-    }
-  }
-
   static get styles(): CSSResult {
-    return css``;
+    return css`
+      .framecard {
+        margin: 5px;
+      }
+    `;
   }
 }
